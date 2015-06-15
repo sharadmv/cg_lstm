@@ -86,6 +86,39 @@ class LSTM(Theanifiable):
                 params.extend([self.Whf])
         return params
 
+    def state(self):
+        return [self.n_input, self.n_hidden, self.num_layers, self.use_forget_gate,
+                self.Wi, self.Ui, self.bi,
+                self.Wo, self.Vo, self.Uo, self.bo,
+                self.Wc, self.Uc, self.bc,
+                self.Whi, self.Who, self.Whc,
+                self.Wf, self.Uf, self.bf, self.Whf
+                ]
+
+    @staticmethod
+    def load(state):
+        print state
+        assert len(state) ==  21, state
+        lstm = LSTM(state[0], state[1], num_layers=state[2], use_forget_gate=state[3])
+        lstm.Wi.set_value(state[4].get_value())
+        lstm.Ui.set_value(state[5].get_value())
+        lstm.bi.set_value(state[6].get_value())
+        lstm.Wo.set_value(state[7].get_value())
+        lstm.Vo.set_value(state[8].get_value())
+        lstm.Uo.set_value(state[9].get_value())
+        lstm.bo.set_value(state[10].get_value())
+        lstm.Wc.set_value(state[11].get_value())
+        lstm.Uc.set_value(state[12].get_value())
+        lstm.bc.set_value(state[13].get_value())
+        lstm.Whi.set_value(state[14].get_value())
+        lstm.Who.set_value(state[15].get_value())
+        lstm.Whc.set_value(state[16].get_value())
+        lstm.Wf.set_value(state[17].get_value())
+        lstm.Uf.set_value(state[18].get_value())
+        lstm.bf.set_value(state[19].get_value())
+        lstm.Whf.set_value(state[20].get_value())
+        return lstm
+
 if __name__ == "__main__":
     layers = 2
     O = 30

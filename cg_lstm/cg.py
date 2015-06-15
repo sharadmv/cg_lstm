@@ -1,10 +1,12 @@
+import cPickle as pickle
 import numpy as np
 import theano
 import theano.tensor as T
 
-theano.config.on_unused_input = 'ignore'
-
 from theanify import theanify, Theanifiable
+
+from lstm import LSTM
+from softmax import Softmax
 
 class CharacterGenerator(Theanifiable):
 
@@ -119,25 +121,31 @@ class CharacterGenerator(Theanifiable):
     def parameters(self):
         return self.lstm.parameters() + self.output.parameters()
 
-class Softmax(Theanifiable):
+    def state(self):
+        return {
+            'lstm': self.lstm.state(),
+            'output': self.output.state()
+        }
 
-    def __init__(self, n_input, n_output):
-        super(Softmax, self).__init__()
-        self.n_input = n_input
-        self.n_output = n_output
+    def save(self, location):
+        state = self.state()
+        with open(location, 'wb') as fp:
+            pickle.dump(state, fp)
 
-        self.Ws = theano.shared(np.random.random((self.n_input, self.n_output)))
-        self.bs = theano.shared(np.random.random(self.n_output))
+    @staticmethod
+    def load(state):
+        lstm = LSTM.load(state['lstm'])
+        output = Softmax.load(state['output'])
+        obj = CharacterGenerator(lstm, output)
+        return obj
 
-    @theanify(T.matrix('X'))
-    def forward(self, X):
-        return T.nnet.softmax(T.dot(X, self.Ws) + self.bs)
-
-    def parameters(self):
-        return [self.Ws, self.bs]
+    @staticmethod
+    def load_model(location):
+        with open(location, 'rb') as fp:
+            state = pickle.load(fp)
+        return CharacterGenerator.load(state)
 
 if __name__ == "__main__":
-    from lstm import LSTM
-    lstm = LSTM(1, 20, num_layers=2)
-    softmax = Softmax(20, 100)
+    lstm = LSTM(1, 2, num_layers=2)
+    softmax = Softmax(2, 2)
     cg = CharacterGenerator(lstm, softmax).compile()

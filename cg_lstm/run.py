@@ -8,6 +8,9 @@ import numpy as np
 from argparse import ArgumentParser
 from path import Path
 
+import theano
+theano.config.reoptimize_unpickled_function = False
+
 logger = logging.getLogger(__file__)
 logger.setLevel(logging.DEBUG)
 
@@ -98,6 +101,7 @@ if __name__ == "__main__":
     argparser.add_argument('--compiled_output', default='cg.pkl')
     argparser.add_argument('--iterations', default=20, type=int)
     argparser.add_argument('--compile', action='store_true')
+    argparser.add_argument('--load', type=str)
 
     args = argparser.parse_args()
     main(args)
@@ -109,17 +113,15 @@ if __name__ == "__main__":
     X = loader.convert_to_tensor(text)
     batcher = Batcher(X, loader.vocab_size(), batch_size=args.batch_size, sequence_length=args.sequence_length)
 
-    if not args.compile and Path(args.compiled_output).exists():
+    cache_location = args.compiled_output if not args.compile else None
+
+    if args.load:
         logger.info("Loading LSTM model from file...")
-        with open(args.compiled_output, 'rb') as fp:
-            cg = pickle.load(fp)
+        cg = CharacterGenerator.load(args.load).compile(cache=cache_location)
     else:
-        logger.info("Compiling LSTM model...")
         lstm = LSTM(1, args.hidden_layer_size, num_layers=args.num_layers)
         softmax = Softmax(args.hidden_layer_size, loader.vocab_size())
-        cg = CharacterGenerator(lstm, softmax).compile()
-        #with open(args.compiled_output, 'wb') as fp:
-            #pickle.dump(cg, fp)
+        cg = CharacterGenerator(lstm, softmax).compile(cache=cache_location)
 
     logger.info("Running SGD")
     learning_rate = 0.1
