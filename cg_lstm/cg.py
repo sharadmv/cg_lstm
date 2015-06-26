@@ -91,6 +91,10 @@ class CharacterGenerator(Theanifiable):
                               n_steps=length)
         return rval[-1].argmax(axis=2)
 
+    @theanify(T.tensor3('X'), T.tensor3('Y'), T.tensor3('states'))
+    def errors(self, X, Y, states):
+        hidden_layer, states, outputs = self.forward(X, states)
+        return ((Y - outputs)**2).sum(), states[-1]
 
     @theanify(T.tensor3('X'), T.tensor3('states'))
     def forward(self, X, states):
@@ -144,6 +148,7 @@ class CharacterGenerator(Theanifiable):
         with open(location, 'rb') as fp:
             state = pickle.load(fp)
         return CharacterGenerator.load(state)
+
 
 if __name__ == "__main__":
     lstm = LSTM(1, 2, num_layers=2)

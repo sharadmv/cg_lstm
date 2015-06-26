@@ -2,8 +2,6 @@ import numpy as np
 import theano
 import theano.tensor as T
 
-theano.config.on_unused_input = 'ignore'
-
 from theanify import theanify, Theanifiable
 
 class LSTM(Theanifiable):
@@ -64,7 +62,7 @@ class LSTM(Theanifiable):
                                                self.Wf, self.Uf[0], self.bf[0],
                                                self.Wc, self.Uc[0], self.bc[0],
                                                self.Wo, self.Vo[0], self.Uo[0], self.bo[0])
-        outs = [state]
+        outs = [out]
         states = [state]
         for l in xrange(1, self.num_layers):
             out, state = self.forward_with_weights(out, previous_hidden[:, l, :], previous_state[:, l, :],
